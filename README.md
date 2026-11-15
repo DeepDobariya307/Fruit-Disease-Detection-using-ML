@@ -1,172 +1,108 @@
-# 🍎 Fruit Disease Detection using Deep Learning
+# Fruit Disease Detection with VGG-16
 
-> **VGG-16 CNN-based image classification model for automated early detection of fruit diseases — published at IEEE ICCCIS 2023.**
+A transfer-learning classifier that sorts apple images into four diseases and a healthy class. The method is published in the IEEE ICCCIS 2023 paper included in this repository.
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?logo=tensorflow)
-![Keras](https://img.shields.io/badge/Keras-Deep%20Learning-red?logo=keras)
-![IEEE](https://img.shields.io/badge/Published-IEEE%20ICCCIS%202023-blue?logo=ieee)
-![Accuracy](https://img.shields.io/badge/Validation%20Accuracy-96--98%25-brightgreen)
+![TensorFlow](https://img.shields.io/badge/TensorFlow%2FKeras-2.x-orange?logo=tensorflow)
+![IEEE](https://img.shields.io/badge/Published-IEEE%20ICCCIS%202023-blue)
+![Accuracy](https://img.shields.io/badge/Validation%20accuracy-97.1%25-brightgreen)
 
----
-
-## 📌 Project Overview
-
-This project presents a deep learning pipeline for automated fruit disease detection using a fine-tuned **VGG-16** convolutional neural network. The model classifies fruit images into healthy and diseased categories, enabling early identification of crop diseases to reduce agricultural losses and support sustainable farming.
-
-The work was **peer-reviewed and published at IEEE ICCCIS 2023**.
-
----
-
-## 📄 Publication
+## Publication
 
 **Detecting Fruit Diseases Using Deep Learning and Image Analysis**
 T. Pareek, D. Dobariya, T. Mahajan, D. Bhise
-*IEEE International Conference on Connected Computing, Intelligent-Systems and Signal Processing (ICCCIS), 2023*
+2023 International Conference on Computing, Communication, and Intelligent Systems (ICCCIS), IEEE
 
-📎 [View Paper (PDF)](./ICCCIS_Detecting%20Fruit%20Diseases%20using%20Deep%20Learning%20and%20Image%20Analysis.pdf)
+[Read the paper (PDF)](./ICCCIS_Detecting%20Fruit%20Diseases%20using%20Deep%20Learning%20and%20Image%20Analysis.pdf)
 
----
+![Pipeline](./Untitled%20Diagram.drawio.png)
 
-## 🎯 Objectives
+## Dataset
 
-- Automate early-stage fruit disease identification using computer vision
-- Evaluate transfer learning with VGG-16 on a multi-class agricultural image dataset
-- Apply real-time data augmentation to improve generalization
-- Validate model performance using ROC/AUC curves and confusion matrices
-
----
-
-## 📊 Dataset
-
-| Property | Details |
+| Split | Images |
 |---|---|
-| Total Images | 14,000+ |
-| Classes | 5 (healthy + diseased categories) |
-| Input Size | 224 × 224 px (VGG-16 standard) |
-| Split | Train / Validation |
+| Training | 8,057 |
+| Validation | 5,993 |
+| Total | 14,050 |
 
----
+Five classes: `apple_scab`, `black_rot`, `blotch`, `cedar_apple_rust` and `healthy`. Images are resized to 224 × 224 pixels and scaled to [0, 1]. The dataset is not part of this repository; the notebook reads it from Google Drive through the `traindir` and `validdir` paths.
 
-## 🧠 Model Architecture
-
-The model is built on **VGG-16** pretrained on ImageNet, with custom classification layers added on top:
+## Model
 
 ```
-Input (224×224×3)
-    ↓
-VGG-16 Convolutional Base (pretrained, ImageNet weights)
-    ↓
+Input (224 × 224 × 3)
+  ↓
+VGG-16 convolutional base, ImageNet weights, frozen   14,714,688 parameters
+  ↓
 Flatten
-    ↓
-Dense (4096, ReLU) → Dropout
-    ↓
-Dense (4096, ReLU) → Dropout
-    ↓
-Dense (5, Softmax)  ← Output: 5 disease classes
+  ↓
+Dense(5, softmax)                                         125,445 trainable parameters
 ```
 
-**Transfer learning strategy:** VGG-16 base layers were frozen during initial training, then selectively unfrozen for fine-tuning.
+Only the output layer is trained. The VGG-16 base keeps its ImageNet weights.
 
----
+## Training
 
-## ⚙️ Methodology
+- Augmentation on the training images: shear 0.2, zoom 0.2, width and height shift 0.2
+- Adam optimiser, categorical cross-entropy, batch size 128, 5 epochs
+- Trained on Google Colab with a GPU
 
-**1. Data Preprocessing**
-- Resized all images to 224×224 pixels
-- Normalized pixel values to [0, 1]
-- Applied real-time data augmentation: horizontal/vertical flips, zoom, rotation, shear
+## Results
 
-**2. Model Training**
-- Optimizer: Adam
-- Loss: Categorical Cross-Entropy
-- Callbacks: EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+| Epoch | Training accuracy | Validation accuracy | Validation loss |
+|---|---|---|---|
+| 1 | 57.2% | 94.9% | 0.210 |
+| 2 | 88.3% | 95.0% | 0.205 |
+| 3 | 91.9% | 96.7% | 0.133 |
+| 4 | 93.8% | 96.0% | 0.147 |
+| 5 | 93.8% | 97.1% | 0.112 |
 
-**3. Evaluation**
-- Validation accuracy and loss curves
-- Confusion matrix across all 5 classes
-- ROC/AUC curves per class
+Training accuracy is measured on augmented images and averaged over each epoch, which is why it stays below validation accuracy. The notebook also plots the accuracy and loss curves and runs an example prediction on a single image.
 
----
+## Limitations
 
-## 📈 Results
+- The validation set is used both to watch training and to report accuracy. There is no separate test evaluation.
+- The VGG-16 base is never unfrozen, so the network is not fine-tuned.
+- The per-class evaluation cell (confusion matrix and classification report) has no stored output yet. Run it after training to get per-class scores.
 
-| Metric | Score |
-|---|---|
-| Validation Accuracy | **96 – 98%** |
-| Evaluation Method | ROC/AUC + Confusion Matrix |
-| Dataset Size | 14,000+ images, 5 classes |
+## Demo app
 
-The model significantly outperforms traditional image processing approaches for disease detection, achieving near-human-level accuracy on unseen validation images.
+Screenshots of a small desktop demo that loads an image and shows the predicted class:
 
----
+<p>
+  <img src="./Picture1.png" width="220" alt="Prediction: blotch">
+  <img src="./Picture2.png" width="220" alt="Prediction: cedar apple rust">
+  <img src="./Picture3.png" width="220" alt="Prediction: healthy">
+</p>
 
-## 📂 Repository Structure
+## Repository structure
 
 ```
-├── FDD_Final.ipynb                          # Full training pipeline (Jupyter Notebook)
-├── ICCCIS_Detecting Fruit Diseases using    # IEEE published paper (PDF)
-│   Deep Learning and Image Analysis.pdf
-├── Picture1.png                             # Sample result/architecture diagram
-├── Picture2.png                             # Sample result
-├── Picture3.png                             # Sample result
-├── Untitled Diagram.drawio.png              # Model architecture diagram
+├── FDD_Final.ipynb                 Data loading, training, curves, evaluation, example prediction
+├── ICCCIS_Detecting Fruit ... .pdf IEEE ICCCIS 2023 paper
+├── Untitled Diagram.drawio.png     Pipeline diagram
+├── Picture1.png – Picture3.png     Demo app screenshots
 └── README.md
 ```
 
----
+## How to run
 
-## 🛠️ Tech Stack
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/DeepDobariya307/Fruit-Disease-Detection-using-ML.git
+   ```
+2. Install the dependencies:
+   ```bash
+   pip install tensorflow numpy pandas matplotlib seaborn scikit-learn
+   ```
+3. Put the training and validation images in one folder per class, and set `traindir` and `validdir` in the notebook to those folders.
+4. Run `FDD_Final.ipynb` in Google Colab (GPU runtime) or Jupyter.
 
-| Tool / Library | Purpose |
-|---|---|
-| Python 3.x | Core language |
-| TensorFlow / Keras | Model building & training |
-| VGG-16 (ImageNet) | Pretrained CNN backbone |
-| NumPy / Pandas | Data manipulation |
-| Matplotlib / Seaborn | Visualization |
-| scikit-learn | Evaluation metrics (ROC, confusion matrix) |
+## Author
 
----
-
-## ▶️ How to Run
-
-**1. Clone the repository**
-```bash
-git clone https://github.com/DeepDobariya307/Fruit-Disease-Detection-using-ML.git
-cd Fruit-Disease-Detection-using-ML
-```
-
-**2. Install dependencies**
-```bash
-pip install tensorflow numpy pandas matplotlib seaborn scikit-learn
-```
-
-**3. Open and run the notebook**
-```bash
-jupyter notebook FDD_Final.ipynb
-```
-
----
-
-## 💼 Real-World Impact
-
-- Enables early detection of crop diseases before visible spread
-- Reduces dependency on manual expert inspection
-- Scalable to mobile/edge deployment for use by farmers in the field
-- Applicable to broader agricultural computer vision use cases
-
----
-
-## 👤 Author
-
-**Deep Prakashbhai Dobariya**
-M.Sc. Artificial Intelligence — BTU Cottbus-Senftenberg
+**Deep Prakashbhai Dobariya**, M.Sc. Artificial Intelligence, BTU Cottbus-Senftenberg
 [GitHub](https://github.com/DeepDobariya307) · [LinkedIn](https://www.linkedin.com/in/deep-dobariya-946816221/)
 
----
+## License
 
-## 📜 License
-
-This project is for academic and research purposes.
-Dataset sourced from publicly available agricultural image repositories.
+For academic and research use. The images come from publicly available agricultural image collections.
